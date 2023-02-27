@@ -1,6 +1,27 @@
 # Functions for use with atmospheric pwv noise estimates
 import numpy as np
 
+def dBdT(T, freq):
+    x= 2*(h**2)*(freq**4)
+    y= np.exp((h*freq)/(k*T)) 
+    z= 1/(k*((T)**2)*(c**2)) 
+    w= (1/((-1)+np.exp((h*freq)/(k*T)))**2)
+    dB_dT= x*y*z*w
+    return dB_dT
+    
+def bnu_aomega(freq, t):
+    a = (2*h*freq**3)/(c**2)
+    b = 1/(np.exp(((h*freq)/(k*t)))-1)
+    B_v= a*b
+    a_omega= (c**2/freq**2)
+    b_v= B_v*a_omega
+    return b_v
+
+#constants
+c= 3e+8 #m/s
+h= 6.62607015e-34 #Plank constant in J/Hz
+k= 1.380649e-23 #Boltzmann constant in J/K
+
 def logistic_bandmodel(nuvec, nu0, dnu,a,n):
     '''Returns a logistic-function band model,
        peaking at unity, given input central frequency
@@ -72,9 +93,51 @@ def read_atmospheres(atmos):
     atmos['Atacama'][900]  = np.loadtxt('Atacama_900u_50deg.txt',unpack=True)
     atmos['Atacama'][1000] = np.loadtxt('Atacama_1000u_50deg.txt',unpack=True)
 
-def calc_dPdTcmb():
-    print('put stuff here')
+  #need to adjust by integrating dTcmb over ftot to get dPopt_cmb/dT_cmb
+def calc_dPdTcmb(nuvec, nuvec2, nu0, dnu, a, n, alpha):
+    #uses detector, optics, atm
+    nu_ghz= np.array(nuvec)
+    nu_ghz2= np.array(nuvec2)
+    nu= nu_ghz*1e9
+    nu2=nu_ghz2*1e9
+    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)
+    dB_dT = dBdT(2.7, nu)
+    dPdTcmb=  np.trapz(model1*dB_dT*(c**2/nu**2), nu) 
+    return dPdTcmb
     
-def calc_dPdpwv():
-    print('put stuff here')
+    #need to adjust by integrating Tb_atm over f_inst to get dPopt_atm/dpwv
+    #w/ f_tot=f_inst * f_atm and f_inst= f_detect * f_lyot
+def calc_dPdpwv(nuvec, nuvec2, tb, tb2, nu0, dnu, a, n, alpha):
+    #interp atm on detector bandmodel?
+    nu_ghz = np.array(nuvec)
+    nu_ghz2 = np.array(nuvec2)
+    nu = nu_ghz*1e9
+    nu2 = nu_ghz2*1e9
+    tb = np.array(tb)
+    tb2 = np.array(tb2)
+    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)
+    #f_interp = np.interp(nu, nu_ghz*1e9, model1, left=0, right=0)
+    P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
+    P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu2)                    
+    dPdpwv= (P_atm1-P_atm0)/0.1
+    return dPdpwv
+    
+
+    ''' (COPIED OVER FROM PREVIOUS DICT)
+    nu_ghz= np.array(atm_array[0])
+                    nu_ghz2= np.array(atm_array2[0])
+                    nu= nu_ghz*1e9
+                    nu2=nu_ghz2*1e9
+                    outdict[site][pwv][t_type][band]['freqvec']= nu_ghz
+                    model1= logistic_easy(nu_ghz, amp, nulow, nuhigh)
+                    
+                    outdict[site][pwv][t_type][band]['spectrum'] = model1
+                    dB_dT= dBdT(2.7, nu)
+                    dPdTcmb= np.trapz(model1*dB_dT*(c**2/nu**2), nu)
+                       
+                    P_atm0 = np.trapz(model1*bnu_aomega(nu, atm_array[2]), nu) #outdict[site][pwv]['tb_array']), nu)
+                    P_atm1 = np.trapz(model1*bnu_aomega(nu, atm_array2[2]), nu2)
+                        
+                    dPdpwv= (P_atm1-P_atm0)/0.1
+                '''
     

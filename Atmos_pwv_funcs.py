@@ -109,6 +109,7 @@ def calc_dPdTcmb(nuvec, nuvec2, nu0, dnu, a, n, alpha):
     #w/ f_tot=f_inst * f_atm and f_inst= f_detect * f_lyot
 def calc_dPdpwv(nuvec, nuvec2, tb, tb2, nu0, dnu, a, n, alpha):
     #interp atm on detector bandmodel?
+    #dpoptam/dpwv
     nu_ghz = np.array(nuvec)
     nu_ghz2 = np.array(nuvec2)
     nu = nu_ghz*1e9
@@ -116,12 +117,19 @@ def calc_dPdpwv(nuvec, nuvec2, tb, tb2, nu0, dnu, a, n, alpha):
     tb = np.array(tb)
     tb2 = np.array(tb2)
     model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)
+    #print("model:", model1)
     #f_interp = np.interp(nu, nu_ghz*1e9, model1, left=0, right=0)
     P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
-    P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu2)                    
+    #print('Patm0', P_atm0)
+    P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)   
+    #print('Patm1:',P_atm1)
     dPdpwv= (P_atm1-P_atm0)/0.1
     return dPdpwv
     
+def calc_gpwv(dPdpwv, dPdTcmb):
+    gpwv= dPdpwv/dPdTcmb
+    return gpwv
+
 
     ''' (COPIED OVER FROM PREVIOUS DICT)
     nu_ghz= np.array(atm_array[0])

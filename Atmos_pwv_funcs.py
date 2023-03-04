@@ -59,6 +59,26 @@ def logistic_bandmodel(nuvec, nu0, dnu,a,n):
     f = np.where(f<1e-5,1e-5,f)
     return f
 
+def logistic_easy(nuvec, amp, nulow, nuhigh):
+    '''Returns a logistic-function band model given inputs
+    
+      nuvec:  vector of frequencies at which to return the function
+      amp: amplitude (predifined)
+      nulow:  low edge of band
+      nuhigh:  high edge of band
+      
+    '''
+    # I tuned aa and nn by hand to "best fit by eye" (globally) 
+    # the bands Sara provided in the first plot below.
+    aa = 2     # smaller aa gives broader tails at all frequency bands
+    nn = 0.7   # larger nn gives broader tails at higher frequency bands
+    k1 = aa*(20/nulow)**nn
+    f1 = 1/(1+np.exp(-k1*(nuvec-nulow )))
+    k2 = aa*(20/nuhigh)**nn
+    f2 = 1-1/(1+np.exp(-k2*(nuvec-nuhigh)))
+    f = f1*f2
+    return f
+
 def read_bandmodel(fname):
     # Band file must be a tab-delimited file with
     #   column1 = frequency in GHz, 
@@ -148,4 +168,58 @@ def calc_gpwv(dPdpwv, dPdTcmb):
                         
                     dPdpwv= (P_atm1-P_atm0)/0.1
                 '''
+def calc_highedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alpha):
+    npts=50
+    freqvec_high= np.linspace(nu_high-(nu_high*0.1), nu_high+(nu_high*0.1), npts)
+    dPdTcmb_h= np.array([])
+    dPdpwv_h= np.array([])
+    #gpwv_h= np.array([])
+   
+    for freqhigh in freqvec_high: 
+        nu_ghz= np.array(nuvec)
+        nu_ghz2= np.array(nuvec2)
+        nu= nu_ghz*1e9
+        nu2=nu_ghz2*1e9
+        tb = np.array(tb)
+        tb2 = np.array(tb2)
+        #previous_model= logistic_easy(nu_ghz, amp, nulow, freqhigh)
+        model1 = logistic_bandmodel(nu_ghz, nu_low, freqhigh, a, n)*alpha_bandmodel(nu_ghz, nu_low, alpha)
+        dB_dT= dBdT(2.7, nu)
+
+        dPdTcmb_h= np.append(dPdTcmb_h, np.trapz(model1*dB_dT*(c**2/nu**2), nu))
+        #print(dPdTcmb_h)
+        P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
+        P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)                 
+        dPdpwv_h= np.append(dPdpwv_h, (P_atm1-P_atm0)/0.1)
+        #print(dPdTcmb_h)
+        #gpwv_h= np.append(gpwv_h, dPdpwv_h/dPdTcmb_h)
+        
+    return dPdTcmb_h, dPdpwv_h #, gpwv_h
+
+def calc_lowedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alpha):
+    npts=50
+    freqvec_low= np.linspace(nu_low-(nu_low*0.1), nu_low+(nu_low*0.1), npts)
+    dPdTcmb_l=np.array([])
+    dPdpwv_l=np.array([])
+    #gpwv_l=np.array([])
     
+    for freqlow in freqvec_low: 
+        nu_ghz= np.array(nuvec)
+        nu_ghz2= np.array(nuvec2)
+        nu= nu_ghz*1e9
+        nu2=nu_ghz2*1e9
+        tb = np.array(tb)
+        tb2 = np.array(tb2)
+        model1 = logistic_bandmodel(nu_ghz, nu_high, freqlow, a, n)*alpha_bandmodel(nu_ghz, nu_high, alpha)
+        dB_dT= dBdT(2.7, nu)
+
+        dPdTcmb_l= np.append(dPdTcmb_l, np.trapz(model1*dB_dT*(c**2/nu**2), nu))
+        P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
+        P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)                 
+        dPdpwv_l= np.append(dPdpwv_l, (P_atm1-P_atm0)/0.1)
+        #gpwv_l= np.append(gpwv_l, dPdpwv_l/dPdTcmb_l)
+        #print(gpwv_l)
+        
+    return dPdTcmb_l, dPdpwv_l #, gpwv_l
+
+                            

@@ -120,7 +120,7 @@ def calc_dPdTcmb(nuvec, nuvec2, nu0, dnu, a, n, alpha):
     nu_ghz2= np.array(nuvec2)
     nu= nu_ghz*1e9
     nu2=nu_ghz2*1e9
-    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)
+    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)# *atmos_trans
     dB_dT = dBdT(2.7, nu)
     dPdTcmb=  np.trapz(model1*dB_dT*(c**2/nu**2), nu) 
     return dPdTcmb
@@ -128,6 +128,7 @@ def calc_dPdTcmb(nuvec, nuvec2, nu0, dnu, a, n, alpha):
     #need to adjust by integrating Tb_atm over f_inst to get dPopt_atm/dpwv
     #w/ f_tot=f_inst * f_atm and f_inst= f_detect * f_lyot
 def calc_dPdpwv(nuvec, nuvec2, tb, tb2, nu0, dnu, a, n, alpha):
+    # (nuvec, tb1, tb2, atmos_trans, instrument_band)  # so we can read in a file for instrument, too.
     #interp atm on detector bandmodel?
     #dpoptam/dpwv
     nu_ghz = np.array(nuvec)

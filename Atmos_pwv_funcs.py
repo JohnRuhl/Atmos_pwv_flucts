@@ -168,7 +168,7 @@ def calc_gpwv(dPdpwv, dPdTcmb):
                         
                     dPdpwv= (P_atm1-P_atm0)/0.1
                 '''
-def calc_highedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alpha):
+def calc_highedgevalues(nu_low, nu_high, nuvec, tb, tb2, bandmodel, atmos_trans): #dnu, a, n, alpha):
     npts=50
     freqvec_high= np.linspace(nu_high-(nu_high*0.1), nu_high+(nu_high*0.1), npts)
     dPdTcmb_h= np.array([])
@@ -177,13 +177,13 @@ def calc_highedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alph
    
     for freqhigh in freqvec_high: 
         nu_ghz= np.array(nuvec)
-        nu_ghz2= np.array(nuvec2)
+        nu_ghz2= np.array(nuvec)
         nu= nu_ghz*1e9
         nu2=nu_ghz2*1e9
         tb = np.array(tb)
         tb2 = np.array(tb2)
         #previous_model= logistic_easy(nu_ghz, amp, nulow, freqhigh)
-        model1 = logistic_bandmodel(nu_ghz, nu_low, freqhigh, a, n)*alpha_bandmodel(nu_ghz, nu_low, alpha)
+        model1 = bandmodel*atmos_trans
         dB_dT= dBdT(2.7, nu)
 
         dPdTcmb_h= np.append(dPdTcmb_h, np.trapz(model1*dB_dT*(c**2/nu**2), nu))
@@ -191,12 +191,12 @@ def calc_highedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alph
         P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
         P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)                 
         dPdpwv_h= np.append(dPdpwv_h, (P_atm1-P_atm0)/0.1)
-        #print(dPdTcmb_h)
+        print(dPdpwv_h)
         #gpwv_h= np.append(gpwv_h, dPdpwv_h/dPdTcmb_h)
         
     return dPdTcmb_h, dPdpwv_h #, gpwv_h
 
-def calc_lowedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alpha):
+def calc_lowedgevalues(nu_low, nu_high, nuvec, tb, tb2, bandmodel, atmos_trans):
     npts=50
     freqvec_low= np.linspace(nu_low-(nu_low*0.1), nu_low+(nu_low*0.1), npts)
     dPdTcmb_l=np.array([])
@@ -210,7 +210,7 @@ def calc_lowedgevalues(nu_low, nu_high, nuvec, nuvec2, tb, tb2, dnu, a, n, alpha
         nu2=nu_ghz2*1e9
         tb = np.array(tb)
         tb2 = np.array(tb2)
-        model1 = logistic_bandmodel(nu_ghz, nu_high, freqlow, a, n)*alpha_bandmodel(nu_ghz, nu_high, alpha)
+        model1 = bandmodel*atmos_trans
         dB_dT= dBdT(2.7, nu)
 
         dPdTcmb_l= np.append(dPdTcmb_l, np.trapz(model1*dB_dT*(c**2/nu**2), nu))

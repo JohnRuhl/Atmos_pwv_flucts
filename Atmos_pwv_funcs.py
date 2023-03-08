@@ -108,38 +108,37 @@ def read_atmospheres(atmos):
     #  Column 3:  transmission
     atmos['Pole'] = {}
     atmos['Atacama'] = {}
-    atmos['Pole'][300] = np.loadtxt('Pole_300u_50deg.txt',unpack=True)
-    atmos['Pole'][400] = np.loadtxt('Pole_400u_50deg.txt',unpack=True)
-    atmos['Atacama'][900]  = np.loadtxt('Atacama_900u_50deg.txt',unpack=True)
-    atmos['Atacama'][1000] = np.loadtxt('Atacama_1000u_50deg.txt',unpack=True)
+    atmos['Pole'][300] = np.loadtxt('SPole_300um_wojacobian.txt',unpack=True)
+    atmos['Pole'][400] = np.loadtxt('SPole_400um_wojacobian.txt',unpack=True)
+    atmos['Atacama'][900]  = np.loadtxt('Atacama_900um_wojacobian.txt',unpack=True)
+    atmos['Atacama'][1000] = np.loadtxt('Atacama_1000um_wojacobian.txt',unpack=True)
 
   #need to adjust by integrating dTcmb over ftot to get dPopt_cmb/dT_cmb
-def calc_dPdTcmb(nuvec, nuvec2, nu0, dnu, a, n, alpha):
+def calc_dPdTcmb(nuvec, bandmodel, atmos_trans):
     #uses detector, optics, atm
     nu_ghz= np.array(nuvec)
-    nu_ghz2= np.array(nuvec2)
+    nu_ghz2= np.array(nuvec)
     nu= nu_ghz*1e9
     nu2=nu_ghz2*1e9
-    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)# *atmos_trans
     dB_dT = dBdT(2.7, nu)
+    model1=bandmodel*atmos_trans
     dPdTcmb=  np.trapz(model1*dB_dT*(c**2/nu**2), nu) 
     return dPdTcmb
     
     #need to adjust by integrating Tb_atm over f_inst to get dPopt_atm/dpwv
     #w/ f_tot=f_inst * f_atm and f_inst= f_detect * f_lyot
-def calc_dPdpwv(nuvec, nuvec2, tb, tb2, nu0, dnu, a, n, alpha):
+def calc_dPdpwv(nuvec, tb, tb2, bandmodel, atmos_trans):
     # (nuvec, tb1, tb2, atmos_trans, instrument_band)  # so we can read in a file for instrument, too.
     #interp atm on detector bandmodel?
     #dpoptam/dpwv
     nu_ghz = np.array(nuvec)
-    nu_ghz2 = np.array(nuvec2)
+    nu_ghz2 = np.array(nuvec)
     nu = nu_ghz*1e9
     nu2 = nu_ghz2*1e9
     tb = np.array(tb)
     tb2 = np.array(tb2)
-    model1 = logistic_bandmodel(nu_ghz, nu0, dnu, a, n)*alpha_bandmodel(nu_ghz, nu0, alpha)
+    model1 = bandmodel*atmos_trans
     #print("model:", model1)
-    #f_interp = np.interp(nu, nu_ghz*1e9, model1, left=0, right=0)
     P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
     #print('Patm0', P_atm0)
     P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)   

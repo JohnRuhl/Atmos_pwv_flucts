@@ -1,6 +1,11 @@
 # Functions for use with atmospheric pwv noise estimates
 import numpy as np
 
+#constants
+c= 3e+8 #m/s
+h= 6.62607015e-34 #Plank constant in J/Hz
+k= 1.380649e-23 #Boltzmann constant in J/K
+
 def dBdT(T, freq):
     # This is for an unpolarized detector.
     x= 2*(h**2)*(freq**4)
@@ -17,11 +22,6 @@ def bnu_aomega(freq, t):
     a_omega= (c**2/freq**2)
     b_v= B_v*a_omega
     return b_v
-
-#constants
-c= 3e+8 #m/s
-h= 6.62607015e-34 #Plank constant in J/Hz
-k= 1.380649e-23 #Boltzmann constant in J/K
 
 def logistic_bandmodel(nuvec, nu0, dnu,a,n):
     '''Returns a logistic-function band model,

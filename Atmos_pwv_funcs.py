@@ -111,38 +111,47 @@ def read_atmospheres(atmos):
     atmos['Atacama'][900]  = np.loadtxt('Atacama_900um_wojacobian.txt',unpack=True)
     atmos['Atacama'][1000] = np.loadtxt('Atacama_1000um_wojacobian.txt',unpack=True)
 
-  #need to adjust by integrating dTcmb over ftot to get dPopt_cmb/dT_cmb
-def calc_dPdTcmb(nuvec, bandmodel, atmos_trans):
-    #uses detector, optics, atm
-    nu_ghz= np.array(nuvec)
-    nu_ghz2= np.array(nuvec)
+def calc_dPdTcmb(nu_ghz, bandmodel, atmos_trans):
+    # Calculates dP_optical/dT_cmb for a single-moded, two-polarization detector, 
+    # given the input instrument band (defined by nuvec and bandmodel) and atmospheric transmission.
+    #
+    # Inputs: (all numpy arrays)
+    #   nuvec:  the frequencies to be integrated over, in GHz
+    #   bandmodel:  the instrument band, as a function of frequencies in nuvec
+    #   atmos_trans:  the atmospheric transmission, as a function of frequencies in nuvec.
+    #
+    # Output: 
+    #   dPdT_cmb, in Watts/K_cmb, at the detector.
     nu= nu_ghz*1e9
-    nu2=nu_ghz2*1e9
     dB_dT = dBdT(2.7, nu)
-    model1=bandmodel*atmos_trans
-    dPdTcmb=  np.trapz(model1*dB_dT*(c**2/nu**2), nu) 
+    AOmega= (c**2/nu**2)
+    dPdTcmb=  np.trapz(bandmodel*atmos_trans*dB_dT*AOmega, nu) 
     return dPdTcmb
     
     #need to adjust by integrating Tb_atm over f_inst to get dPopt_atm/dpwv
     #w/ f_tot=f_inst * f_atm and f_inst= f_detect * f_lyot
-def calc_dPdpwv(nuvec, tb, tb2, bandmodel, atmos_trans):
-    # (nuvec, tb1, tb2, atmos_trans, instrument_band)  # so we can read in a file for instrument, too.
-    #interp atm on detector bandmodel?
-    #dpoptam/dpwv
-    nu_ghz = np.array(nuvec)
-    nu_ghz2 = np.array(nuvec)
+    
+def calc_dPdpwv(nu_ghz, tb1, tb2, dpwv, inst_band):
+    # Calculates dP_optical/d_pwv for a single-moded, two-polarization detector, 
+    # given the input instrument band (defined by nuvec and bandmodel) and atmospheric Tb(nu) for two neighboring pwvs.
+    #
+    # Inputs: (all numpy arrays)
+    #   nughz:  the frequencies to be integrated over, in GHz
+    #   tb1, tb2: atmospheric Tb's as a function of frequencies in nuvec
+    #   dpwv: difference in pwv (in units of mm) at which those tb's were calculated.
+    #   bandmodel:  the instrument band, as a function of frequencies in nuvec
+    #
+    # Output:
+    #   dPdpwv, in Watts/mm_pwv.
+    #
     nu = nu_ghz*1e9
-    nu2 = nu_ghz2*1e9
-    tb = np.array(tb)
-    tb2 = np.array(tb2)
-    model1 = bandmodel*atmos_trans
-    #print("model:", model1)
-    P_atm0 = np.trapz(model1*bnu_aomega(nu, tb), nu) 
-    #print('Patm0', P_atm0)
-    P_atm1 = np.trapz(model1*bnu_aomega(nu, tb2), nu)   
-    #print('Patm1:',P_atm1)
-    dPdpwv= (P_atm1-P_atm0)/0.1
+    #
+    P_atm0 = np.trapz(inst_band*bnu_aomega(nu, tb1), nu) 
+    P_atm1 = np.trapz(inst_band*bnu_aomega(nu, tb2), nu)   
+    dPdpwv= (P_atm1-P_atm0)/dpwv
+    #
     return dPdpwv
+    
     
 def calc_gpwv(dPdpwv, dPdTcmb):
     gpwv= dPdpwv/dPdTcmb

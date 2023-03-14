@@ -2,6 +2,7 @@
 import numpy as np
 
 def dBdT(T, freq):
+    # This is for an unpolarized detector.
     x= 2*(h**2)*(freq**4)
     y= np.exp((h*freq)/(k*T)) 
     z= 1/(k*((T)**2)*(c**2)) 
@@ -59,21 +60,16 @@ def logistic_bandmodel(nuvec, nu0, dnu,a,n):
     f = np.where(f<1e-5,1e-5,f)
     return f
 
-def flat_band(nuvec, band_int, nu0,dnu):
+def flat_bandmodel(nuvec, nu_low,nu_high):
     '''Returns a flat band model given inputs
-    
+    Inputs:
       nuvec:  vector of frequencies at which to return the function
-      band_int: the desired integral of the band.
-      nu0:  center frequency
-      dnu:  bandwidth
-      
+      nu_low: low frequency edge
+      nu_high: high frequency edge
+    Output:
+      f : normalized flat bandpass model, =1 inside band, =0 outside band.
     '''
-    low = nu0-dnu/2
-    high = nu0+dnu/2
-
-    f = np.where((nuvec>low)&(nuvec<high), 1, 0)
-    band_integral = np.trapz(f,x=nuvec)
-    f = (band_int/band_integral)*f
+    f = np.where((nuvec>=nu_low)&(nuvec<=nu_high), 1, 1e-10)
     return f
 
 
@@ -137,7 +133,7 @@ def calc_dPdpwv(nu_ghz, tb1, tb2, dpwv, inst_band):
     #
     # Inputs: (all numpy arrays)
     #   nughz:  the frequencies to be integrated over, in GHz
-    #   tb1, tb2: atmospheric Tb's as a function of frequencies in nuvec
+    #   tb1, tb2: atmospheric Tb's as a function of frequencies in nuvec.  tb2 is at the higher pwv.
     #   dpwv: difference in pwv (in units of mm) at which those tb's were calculated.
     #   bandmodel:  the instrument band, as a function of frequencies in nuvec
     #
@@ -146,9 +142,9 @@ def calc_dPdpwv(nu_ghz, tb1, tb2, dpwv, inst_band):
     #
     nu = nu_ghz*1e9
     #
-    P_atm0 = np.trapz(inst_band*bnu_aomega(nu, tb1), nu) 
-    P_atm1 = np.trapz(inst_band*bnu_aomega(nu, tb2), nu)   
-    dPdpwv= (P_atm1-P_atm0)/dpwv
+    P_atm1 = np.trapz(inst_band*bnu_aomega(nu, tb1), nu) 
+    P_atm2 = np.trapz(inst_band*bnu_aomega(nu, tb2), nu)   
+    dPdpwv= (P_atm2-P_atm1)/dpwv
     #
     return dPdpwv
     

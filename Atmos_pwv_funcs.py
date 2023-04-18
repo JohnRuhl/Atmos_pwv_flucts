@@ -60,6 +60,28 @@ def logistic_bandmodel(nuvec, nu0, dnu,a,n):
     f = np.where(f<1e-5,1e-5,f)
     return f
 
+def logistic_easy(nuvec, nulow, nuhigh, a, n):
+    '''Returns a logistic-function band model given inputs
+    
+      nuvec:  vector of frequencies at which to return the function
+      amp: amplitude (predifined)
+      nulow:  low edge of band
+      nuhigh:  high edge of band
+      
+    '''
+    # I tuned aa and nn by hand to "best fit by eye" (globally) 
+    # the bands Sara provided in the first plot below.
+    #aa = 2     # smaller aa gives broader tails at all frequency bands
+    #nn = 0.7   # larger nn gives broader tails at higher frequency bands
+    k1 = a*(20/nulow)**n
+    f1 = 1/(1+np.exp(-k1*(nuvec-nulow )))
+    k2 = a*(20/nuhigh)**n
+    f2 = 1-1/(1+np.exp(-k2*(nuvec-nuhigh)))
+    f = f1*f2
+    f = f/np.max(f) # normalize to unity
+    f = np.where(f<1e-5,1e-5,f)
+    return f
+
 def flat_bandmodel(nuvec, nu_low,nu_high):
     '''Returns a flat band model given inputs
     Inputs:

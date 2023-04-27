@@ -124,10 +124,11 @@ def read_atmospheres(atmos):
     #  Column 3:  transmission
     atmos['Pole'] = {}
     atmos['Atacama'] = {}
-    atmos['Pole'][300] = np.loadtxt('SPole_300um_wojacobian.txt',unpack=True)
-    atmos['Pole'][400] = np.loadtxt('SPole_400um_wojacobian.txt',unpack=True)
-    atmos['Atacama'][900]  = np.loadtxt('Atacama_900um_wojacobian.txt',unpack=True)
-    atmos['Atacama'][1000] = np.loadtxt('Atacama_1000um_wojacobian.txt',unpack=True)
+    #here is where we will determine if we will use jacobian or not
+    atmos['Pole'][300] = np.loadtxt('SPole_300um_wjacobian.txt',unpack=True)
+    atmos['Pole'][400] = np.loadtxt('SPole_400um_wjacobian.txt',unpack=True)
+    atmos['Atacama'][900]  = np.loadtxt('Atacama_900um_wjacobian.txt',unpack=True)
+    atmos['Atacama'][1000] = np.loadtxt('Atacama_1000um_wjacobian.txt',unpack=True)
 
 def calc_dPdTcmb(nu_ghz, bandmodel, atmos_trans):
     # Calculates dP_optical/dT_cmb for a single-moded, two-polarization detector, 
